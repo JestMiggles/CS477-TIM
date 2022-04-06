@@ -14,6 +14,7 @@ function _init()
   map_spd = 1
   hill_spd = 0.5
   mnt_spd = 0.25
+  speed = 0.001
   
   state = "game"
 end
@@ -34,9 +35,9 @@ function _update()
 		    cx = 0
 		  end
 		  
-		  mnt_spd += .0001
-		  map_spd += .0001
-		  hill_spd += .0001
+		  mnt_spd += speed
+		  map_spd += speed
+		  hill_spd+= speed
 		
   elseif state == "over" then
     cls()
@@ -112,6 +113,10 @@ function init_player()
   pl.oy = 80
   pl.w = 16
   pl.h = 16
+  //jump stuff
+  pl.jf = 0 //jump force
+  pl.jt = true //jump allowed
+  pl.jm = 12 //jump max
   
   grav = 2
 end
@@ -124,24 +129,43 @@ function draw_player()
 end
 
 function move_player()
-  pl.ox = pl.x
-  pl.oy = pl.y
   
-  if btn(⬆️) then
-    pl.y -= 10        
+  //
+  //jump handling
+  //
+  
+  //jump held
+  if btn(⬆️) and pl.jt then
+    pl.jf =  -3 
   end
   
-  pl.y += grav
+  //max height reached
+  if pl.y > 80-pl.jm or not pl.jt then
+    pl.jt = false
+    pl.jf += .1
+  end
   
-  if c_collide(pl.x, pl.y,
-               pl.w, pl.h) then
+  //player is on ground
+  if pl.y == 80 and not btn(⬆️) then
+    pl.jt = true
+    pl.jf = 0
+  end
+  
+  //move player
+  pl.y += pl.jf
+  
+  //enforce boundarys
+  if pl.y > 80 or pl.y < 0 then
+    pl.y = 80
+  end
+  
+  
+  //
+  //cactus handling
+  //
+  
+  if c_collide(pl.x,pl.y,pl.w,pl.h) then
     state = "over"
-  
-  elseif map_collide(pl.x, pl.y,
-  															pl.w, pl.h) then
-    pl.x = pl.ox
-  	 pl.y = pl.oy
-  
   end
   
 end
