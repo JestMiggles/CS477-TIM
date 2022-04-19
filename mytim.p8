@@ -2,8 +2,7 @@ pico-8 cartridge // http://www.pico-8.com
 version 35
 __lua__
 -- main
-function _init()
-  cls()  
+function _init()  
   ts = 0  
   state = "start"
   init_game() 
@@ -49,6 +48,8 @@ function init_game()
   pl.s = 1
   pl.tle = 0
   pl.hp = 3
+  pl.delay = 0
+  pl.dash = 5
   t = 0
   
   part={}
@@ -61,11 +62,10 @@ function init_game()
   gridx = 0
   gridy = 0
   
+  speed = 1
+  
   cx = 0
   cy = 0
-  
-  dash_timer = 0
-  dash_cooldown = 10
   
   box = {}
   box.x = 32
@@ -81,9 +81,6 @@ function update_start()
 end
 
 function update_game()
-  if dash_timer > 0 then
-    dash_timer -= 1
-  end   
   pl.s = 3
   t += 1
   pl.ox = pl.x
@@ -92,59 +89,20 @@ function update_game()
   gridy = flr(pl.y/8)  
   pl.tle = mget(gridx,gridy)
   
-  
-  --player movement
-  if btn(➡️) then
-    pl.x += 1  
-    pl.s = 1       
-    if btn(❎)  then
-      pl.x += 2  
-      spawntrail(pl.x-2,pl.y+4)       
-    end    
-  elseif btn(⬅️) then
-    pl.x -= 1
-    pl.s = 2
-    if btn(❎)  then
-      pl.x -= 2  
-      spawntrail(pl.x+2,pl.y+4)    
-    end
-  end
-  
-  if btn(⬆️) then
-    pl.y -= 1
-    pl.s = 4
-    if btn(❎) then
-      pl.y -= 2
-      spawntrail(pl.x+4,pl.y+2)
-    end    
-  elseif btn(⬇️) then
-    pl.y += 1
-    pl.s = 3
-    if btn(❎) then
-      pl.y += 2
-      spawntrail(pl.x+4,pl.y-2)
-    end     
-  end  
-  
-  --collision detection
-  if map_collide(pl.x,pl.y,
-                 pl.w,pl.h) then
-     bump()
-  end  
+  move_player()
   
   --camera movement
   if pl.x < box.x then
     pl.x = box.x
-    if btn(❎)  then
-      cx -= 4
+    if btn(❎) then
+      cx -= pl.dash
      
     end
     cx -= 2
   elseif pl.x > box.x2 then
     pl.x = box.x2
     if btn(❎)  then
-      cx += 4
-    
+      cx += pl.dash   
     end
     cx += 2
   end
@@ -163,14 +121,14 @@ function update_game()
   if pl.y < box.y then
     pl.y = box.y
     if btn(❎)  then
-      cy -= 4
+      cy -= pl.dash
       
     end
     cy -= 1
   elseif pl.y > box.y2 then
     pl.y = box.y2
     if btn(❎)  then 
-      cy += 4
+      cy += pl.dash
       
     end
     cy += 1
@@ -214,7 +172,7 @@ end
 
 function draw_start()
 
-  //cls()
+  cls()
   while (ts<60) do
     if (ts>30) then
     spr(69,71,48)
@@ -304,10 +262,10 @@ function map_collide(x,y,
   x += cx 
   y += cy
   
-  s1 = mget(x / 8, y / 8)
-  s2 = mget((x+w-1) /8, y / 8)            
-  s3 = mget(x / 8,(y+w-1) /8)
-  s4 = mget((x+w-1) /8,(y+w-1) /8)
+  s1 = mget(x/8,y/8)
+  s2 = mget((x+w-1)/8,y/8)            
+  s3 = mget(x/8,(y+w-1)/8)
+  s4 = mget((x+w-1)/8,(y+w-1)/8)
             
   if fget(s1,3) then                      
     return true
@@ -332,14 +290,26 @@ function item_collide(tle,x,y)
   end  
 end
 
-function cooldown()
+
+function tile_hit(
+               x1,y1,w1,h1,
+               x2,y2,w2,h2)
   
-  if dash_cooldown > 0 then 
-    return true
+  local hit = false
+  
+  local xs=w1*0.5+w2*0.5
+  local ys=h1*0.5+h2*0.5
+  local xd = abs((x1+(w1/2))-(x2+(w2/2)))
+  local yd = abs((y1+(h1/2))-(y2+(h2/2)))
+  
+  if xd<xs and yd<ys then
+    hit = true
   end
-  
-  return false
+
+  return hit
 end
+
+
 -->8
 --pickups
 function init_pickups()
@@ -398,7 +368,7 @@ function addmob(typ,mobx,moby)
   local s = {
     x = mobx,
     y = moby,
-    ani = {49,50,51,52}
+    ani = {33,34,35,36}
   }
   if typ == 0 then  
     add(mob,m) 
@@ -423,6 +393,92 @@ function mobwalk(mob,dx,dy)
 
 end
 
+-->8
+--player movement
+function move_player()
+
+  if btn(➡️) then  
+    pl.s = 1
+    for newx = pl.x,pl.x+speed do
+     if not map_collide(newx,pl.y,pl.w,pl.h) then
+       pl.x = newx      
+     end    
+    end  
+              
+    if (btn(❎) and pl.delay == 0)
+    then   
+      pl.delay = 30 
+      for dashx = pl.x,pl.x+pl.dash do
+        if not map_collide(dashx,pl.y,pl.w,pl.h) then
+          pl.x = dashx 
+          spawntrail(pl.x-2,pl.y+4)     
+        end    
+      end
+    end 
+       
+  elseif btn(⬅️) then
+    pl.s = 2
+    for newx = pl.x,pl.x-speed,-1 do
+      if not map_collide(newx,pl.y,pl.w,pl.h) then
+        pl.x = newx       
+      end
+    end
+   
+    if (btn(❎) and pl.delay == 0)
+    then
+      pl.delay = 30
+      for dashx = pl.x,pl.x-pl.dash,-1 do
+       if not map_collide(dashx,pl.y,pl.w,pl.h) then
+         pl.x = dashx  
+         spawntrail(pl.x+2,pl.y+4)                    
+       end                    
+      end
+    end
+  end
+    
+  
+  if btn(⬆️) then
+    pl.s = 4
+    for newy = pl.y,pl.y-speed,-1 do
+      if not map_collide(pl.x,newy,pl.w,pl.h) then  
+         pl.y = newy
+      end
+    end 
+    
+    if (btn(❎) and pl.delay == 0)
+    then
+      pl.delay = 30
+      for dashy = pl.y,pl.y-pl.dash,-1 do
+       if not map_collide(pl.x,dashy,pl.w,pl.h) then
+         pl.y = dashy  
+         spawntrail(pl.x+4,pl.y+2)
+       end
+      end 
+    end
+         
+  elseif btn(⬇️) then    
+    pl.s = 3
+    for newy = pl.y,pl.y+speed do
+     if not map_collide(pl.x,newy,pl.w,pl.h) then
+         pl.y = newy
+     end 
+    end 
+    
+    if (btn(❎) and pl.delay == 0)
+    then
+      pl.delay = 30
+      for dashy = pl.y,pl.y+pl.dash do
+        if not map_collide(pl.x,dashy,pl.w,pl.h) then
+          pl.y = dashy  
+          spawntrail(pl.x+4,pl.y-2)
+        end
+      end
+    end    
+  end  
+
+  pl.delay = max(0,pl.delay-1)
+    
+end
 __gfx__
 000000000055000000005500000550000005500000000000000000005555d6550000000000000000000000000000000000000000000000000000000000000000
 000000000599900000099950009995000055550000000000000000005555d6550000000000000000000000000000000000000000000000000000000000000000
@@ -440,7 +496,7 @@ __gfx__
 00000000bbbbbbb00bbbbb00bbbbbbb0bbbbbbbb0000000000000000788888707888888767888860678888600000000000000000000000000000000000000000
 000000000bbbbb0000bbb0000bbbbb000bbbbbb00000000000000000788888707788887768888860688888600000000000000000000000000000000000000000
 00000000000000000000000000000000000000000000000000000000077777000777777006666600066666000000000000000000000000000000000000000000
-00000000007700000077000000770000007700000000000000000000007770000777777000000000000000000000000000000000000000000000000000000000
+00000000007700000077000000770000007700000000000000000000007770000777777000040000000400000000000000000000000000000000000000000000
 00000000070707000707070007070700070707000000000000000000070007007000000706666600066666000000000000000000000000000000000000000000
 00000000077777000777770007777700077777000000000000000000070007007000000700606000006060000000000000000000000000000000000000000000
 0000000077000700070007007700070077000700000000000000000000777000077777700600060006aaa6000000000000000000000000000000000000000000
