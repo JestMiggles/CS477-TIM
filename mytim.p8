@@ -16,6 +16,8 @@ function _update()
     update_game()
     updateparts()
     update_pickups()
+  elseif state == "over" then
+    game_over()
   end 
   
 end
@@ -57,11 +59,16 @@ function init_game()
   pl.dash = 6
   t = 0
   
+  camdash = pl.dash+3
+  
   hpwind=add_wind(5,5,28,13,{"♥3/3"})
   
   part={}
   
   mob = {}
+  mob_hp ={2,1}
+  mob_atk = {1,1}
+  
   addmob(0,2,6)
   addmob(0,29,23)
   addmob(0,13,29)
@@ -102,7 +109,7 @@ function update_game()
   gridx = flr(pl.x/8)
   gridy = flr(pl.y/8)  
   pl.tle = mget(gridx,gridy)
-  
+  camdelay = pl.delay
   move_player()
   cam_movement()
  
@@ -112,8 +119,8 @@ function update_game()
 end
 
 function game_over()
-   print("you are dead",60,60,8)
-   
+  cls()
+  print("you are dead",60,60,8)   
 end
 
 
@@ -371,6 +378,9 @@ function addmob(typ,mobx,moby)
   local m = {
     x = mobx,
     y = moby,
+    hp = mob_hp[typ],
+    homax = mob_hp[typ],
+    atk = mob_atk[typ],
     ani = {17,18,19,20}
   }  
   local s = {
@@ -405,11 +415,82 @@ end
 --player & cam movement
 function move_player()
   
+  --top right dash
+  if (btn(➡️) and btn(⬆️)) then
+    if (btn(🅾️) and pl.delay == 0) then
+     pl.delay = cooldown
+     for dashx = pl.x,pl.x+pl.dash do
+      for dashy = pl.y,pl.y-pl.dash,-1 do
+       if not map_collide(dashx,dashy,pl.w,pl.h) then
+         pl.x = dashx
+         pl.y = dashy 
+         spawntrail(pl.x-2,pl.y+4) 
+         spawntrail(pl.x+4,pl.y+2)             
+       end
+      end
+     end
+    end
+  end
+  
+  --top left dash
+  if (btn(⬅️) and btn(⬆️)) then
+    if (btn(🅾️) and pl.delay == 0) then
+     pl.delay = cooldown
+     for dashx = pl.x,pl.x-pl.dash,-1 do
+      for dashy = pl.y,pl.y-pl.dash,-1 do
+       if not map_collide(dashx,dashy,pl.w,pl.h) then
+         pl.x = dashx
+         pl.y = dashy 
+         spawntrail(pl.x+2,pl.y+4)       
+         spawntrail(pl.x+4,pl.y+2)          
+       end
+      end
+     end
+    end
+  end
+  
+  --bottom right dash
+  if (btn(➡️) and btn(⬇️)) then
+    if (btn(🅾️) and pl.delay == 0) then
+     pl.delay = cooldown
+     for dashx = pl.x,pl.x+pl.dash do
+      for dashy = pl.y,pl.y+pl.dash do
+       if not map_collide(dashx,dashy,pl.w,pl.h) then
+         pl.x = dashx
+         pl.y = dashy 
+         spawntrail(pl.x-2,pl.y+4) 
+         spawntrail(pl.x+4,pl.y-2)          
+       end
+      end
+     end
+    end
+  end
+  
+  --bottom left dash
+  if (btn(⬅️) and btn(⬇️)) then
+    if (btn(🅾️) and pl.delay == 0) then
+     pl.delay = cooldown
+     for dashx = pl.x,pl.x-pl.dash,-1 do
+      for dashy = pl.y,pl.y+pl.dash do
+       if not map_collide(dashx,dashy,pl.w,pl.h) then
+         pl.x = dashx
+         pl.y = dashy 
+         spawntrail(pl.x+2,pl.y+4) 
+         spawntrail(pl.x+4,pl.y-2)    
+       end
+      end
+     end
+    end
+  end
+  
+  --basic movement
   if btn(➡️) then  
     pl.s = 1
     for newx = pl.x,pl.x+speed do
      if not map_collide(newx,pl.y,pl.w,pl.h) then
        pl.x = newx      
+     else 
+       sfx(0)
      end    
     end  
               
@@ -429,6 +510,8 @@ function move_player()
     for newx = pl.x,pl.x-speed,-1 do
       if not map_collide(newx,pl.y,pl.w,pl.h) then
         pl.x = newx       
+      else
+        sfx(0)
       end
     end
    
@@ -494,16 +577,16 @@ function cam_movement()
   
   if pl.x < box.x then
     pl.x = box.x
-    if (btnp(🅾️) and pl.delay == 0) then
-      cx -= pl.dash
+    if (btn(🅾️) and camdelay == 0) then
+      cx -= camdash 
     else
       cx -= speed
     end
     
   elseif pl.x > box.x2 then
     pl.x = box.x2
-    if (btnp(🅾️) and pl.delay == 0) then
-      cx += pl.dash   
+    if (btn(🅾️) and camdelay == 0) then
+      cx += camdash   
     else
       cx += speed
     end
@@ -523,8 +606,8 @@ function cam_movement()
   if pl.y < box.y then
     
     pl.y = box.y
-    if (btnp(🅾️) and pl.delay == 0) then
-      cy -= pl.dash    
+    if (btn(🅾️) and camdelay == 0) then
+      cy -= camdash   
     else          
       cy -= speed
     end
@@ -532,8 +615,8 @@ function cam_movement()
   elseif pl.y > box.y2 then
     
     pl.y = box.y2
-    if (btnp(🅾️) and pl.delay == 0) then
-      cy += pl.dash    
+    if (btn(🅾️) and camdelay == 0) then
+      cy += camdash    
     else          
       cy += speed
     end
@@ -717,3 +800,5 @@ __map__
 0708080808080808080808080808080707080808080708080808080808080807070808080808080808080808080808070708080808080808080808080808080707080808080808080808080808080807070808080808080808080808080808070708080808080808080808080808080707080808080808080808080808080807
 0708080808080808080808080808080707080808080708080808080808080807070808080808080808080808080808070608080808080808080808080808080707080808080808080808080808080807070808080808080808080808080808070708080808080808080808080808080707080808080808080808080808080807
 0707070707070808080808070707070707070707070708080808080707070707070707070707070707070707070707070606060707070808080808080707070707070707070707080808070707070707070707070707080808080807070707070707070707080808080807070707070707070606060708080808070707070707
+__sfx__
+0001000008010080100a01008010090100d010110200e0200f0201202003020000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
