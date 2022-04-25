@@ -90,7 +90,7 @@ function init_game()
   gridx = 0
   gridy = 0
   
-  speed = 5.5   // FIXME this should be 1.5, i bumped it up for testing.
+  speed = 1.5   // FIXME this should be 1.5, i bumped it up for testing.
   cooldown = 120
   
   cx = 0
