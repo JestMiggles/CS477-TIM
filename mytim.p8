@@ -1205,7 +1205,6 @@ function invmenu()
  invwind=addwind(5,29,84,62,txt)
  invwind.curmode=true
  invwind.cur=4
- 
  invwind.col=col
  
  statwind=addwind(5,17,84,13,{"def: 1  stamina: 1"})
