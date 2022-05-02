@@ -15,17 +15,18 @@ function _update()
   if state == "start" then
     update_start()
   elseif state == "game" then
+    dmg = 0
     update_game()
     updateparts()
     update_pickups()
+    pl_dmg()
     portal_collision()
+  elseif state == "inv" then
+  	 update_inv()
   elseif state == "travel" then
     update_travel()
   elseif state == "over" then
     game_over()
-  elseif state == "inv" then
-    drawind()
-  	 update_inv()
   end
   
   
@@ -38,6 +39,8 @@ function _draw()
     draw_map()
     draw_player()
     draw_pickups()
+  elseif state == "inv" then
+    drawind()
   elseif state == "travel" then
     draw_map()
     draw_player()
@@ -78,10 +81,10 @@ function init_game()
   eqp[2] = "stamina potion"
   hpp = 0
   spp = 0
-  hp = 2
   hpmax = 3
   sp = 2
   spmin = 0
+  iframe = 0
   itm_name={"broad sword","leather armor","red potion"}
   
   wind={}
@@ -90,7 +93,7 @@ function init_game()
   
   camdash = pl.dash+3
   
-  hpwind=addwind(5,5,28,13,{hp.."/"..hpmax.."♥"})
+  hpwind=addwind(5,5,28,13,{pl.hp.."/"..hpmax.."♥"})
   
   part={}
   
@@ -111,8 +114,8 @@ function init_game()
   gridx = 0
   gridy = 0
   
-  speed = 1.5
-  cooldown = 120
+  speed = 2
+  cooldown = 60
   
   cx = 0
   cy = 0
@@ -175,7 +178,7 @@ end
 
 function game_over()
   cls()
-  print("you are dead",60,60,8)   
+  print("you are dead",40,60,8)   
 end
 
 function update_inv()
@@ -190,6 +193,45 @@ function update_inv()
  end
 end
 
+function mob_dmg()
+
+   if(dmg == 0) then
+    px = pl.x + cx
+    py = pl.y + cy
+
+    for m in all(mob) do
+      if mobcollide(
+         px, py, pl.w, pl.h,
+         m.x*8,m.y*8,8 ,8) then
+        m.hp -= 1
+        dmg = 1
+        if(m.hp <= 0) then
+          del(mob,m)
+        end
+      end
+    end
+   end
+
+end
+
+function pl_dmg()
+  if(iframe <= 0) then
+    px = pl.x + cx
+    py = pl.y + cy
+
+    for m in all(mob) do
+      if mobcollide(
+         px, py, pl.w, pl.h,
+         m.x*8,m.y*8,8 ,8) then
+        pl.hp -= 1
+        addwind(5,5,28,13,{pl.hp.."/"..hpmax.."♥"})
+        iframe = 32
+      end
+    end
+   else
+     iframe -= 1
+   end
+end
 -->8
 -- collision and draw
 function draw_map()
@@ -373,6 +415,20 @@ function portal_collision()
   end
 end
 
+function mobcollide(
+              x1, y1, w1, h1,
+              x2, y2, w2, h2)
+
+  if x1 < x2 + w2 and
+     x1 + w1 > x2 and
+     y1 < y2 + h2 and
+     y1 + h1 > y2 then
+   return true
+  end
+
+  return false
+end
+
 -->8
 -- pickups
 function init_pickups()
@@ -385,10 +441,10 @@ function init_pickups()
 end
 
 function update_pickups()
-   
+
    px = pl.x + cx
    py = pl.y + cy
-   
+
    for p in all(pu) do
      if aabb_collide(
        px, py, pl.w, pl.h,
@@ -411,7 +467,7 @@ end
 function draw_pickups()
   camera(cx,cy)
   for p in all(pu) do 
-    spr(p.s,p.x*8,p.y*8)
+    spr(p.s,p.x8,p.y8)
   end
   camera(0,0)
   drawind()
@@ -420,34 +476,36 @@ end
 function aabb_collide(
               x1, y1, w1, h1,
               x2, y2, w2, h2)
-              
+
   if x1 < x2 + w2 and
      x1 + w1 > x2 and
      y1 < y2 + h2 and
      y1 + h1 > y2 then
    return true
   end
-  
- return false
+
+  return false
 end
 -->8
 -- mobs
 function addmob(typ,mobx,moby)
   local m = {
-    x = mobx,
-    y = moby,
-    hp = mob_hp[typ],
-    homax = mob_hp[typ],
+    x  = mobx,
+    y  = moby,
+    hp = 1,
+    //homax = mob_hp[typ],
     atk = mob_atk[typ],
     ani = {17,18,19,20}
-  }  
+  }
   local s = {
     x = mobx,
     y = moby,
+    hp = 2,
+    atk = 2,
     ani = {33,34,35,36}
   }
-  if typ == 0 then  
-    add(mob,m) 
+  if typ == 0 then
+    add(mob,m)
   else
     add(mob,s) 
   end
@@ -457,7 +515,7 @@ function getframe(ani)
   return ani[flr(t/8)%4+1]
 end
 
-function drawspr(_spr,_x,_y,_c)   
+function drawspr(_spr,_x,_y,_c)
    camera(cx,cy)
    spr(_spr,_x,_y)
    camera(0,0)
@@ -466,9 +524,7 @@ end
 function mobwalk(mob,dx,dy)
   mob.x += dx
   mob.y += dy
-
 end
-
 -->8
 -- player & cam movement
 function move_player()
@@ -477,8 +533,10 @@ function move_player()
   if (btn(➡️) and btn(⬆️)) then
     if (btn(🅾️) and pl.delay == 0) then
      pl.delay = cooldown
+     iframe = 32
      for dashx = pl.x,pl.x+pl.dash do
       for dashy = pl.y,pl.y-pl.dash,-1 do
+       mob_dmg()
        if not map_collide(dashx,dashy,pl.w,pl.h) then
          pl.x = dashx
          pl.y = dashy 
@@ -494,8 +552,10 @@ function move_player()
   if (btn(⬅️) and btn(⬆️)) then
     if (btn(🅾️) and pl.delay == 0) then
      pl.delay = cooldown
+     iframe = 32
      for dashx = pl.x,pl.x-pl.dash,-1 do
       for dashy = pl.y,pl.y-pl.dash,-1 do
+       mob_dmg()
        if not map_collide(dashx,dashy,pl.w,pl.h) then
          pl.x = dashx
          pl.y = dashy 
@@ -511,8 +571,10 @@ function move_player()
   if (btn(➡️) and btn(⬇️)) then
     if (btn(🅾️) and pl.delay == 0) then
      pl.delay = cooldown
+     iframe = 32
      for dashx = pl.x,pl.x+pl.dash do
       for dashy = pl.y,pl.y+pl.dash do
+       mob_dmg()
        if not map_collide(dashx,dashy,pl.w,pl.h) then
          pl.x = dashx
          pl.y = dashy 
@@ -528,8 +590,10 @@ function move_player()
   if (btn(⬅️) and btn(⬇️)) then
     if (btn(🅾️) and pl.delay == 0) then
      pl.delay = cooldown
+     iframe = 32
      for dashx = pl.x,pl.x-pl.dash,-1 do
       for dashy = pl.y,pl.y+pl.dash do
+       mob_dmg()
        if not map_collide(dashx,dashy,pl.w,pl.h) then
          pl.x = dashx
          pl.y = dashy 
@@ -554,8 +618,10 @@ function move_player()
               
     if (btn(🅾️) and pl.delay == 0)
     then   
-      pl.delay = cooldown 
+      pl.delay = cooldown
+      iframe = 32
       for dashx = pl.x,pl.x+pl.dash do
+        mob_dmg()
         if not map_collide(dashx,pl.y,pl.w,pl.h) then
           pl.x = dashx 
           spawntrail(pl.x-2,pl.y+4)     
@@ -576,7 +642,9 @@ function move_player()
     if (btn(🅾️) and pl.delay == 0)
     then
       pl.delay = cooldown
+      iframe = 32
       for dashx = pl.x,pl.x-pl.dash,-1 do
+       mob_dmg()
        if not map_collide(dashx,pl.y,pl.w,pl.h) then
          pl.x = dashx 
          spawntrail(pl.x+2,pl.y+4)                    
@@ -598,7 +666,9 @@ function move_player()
     if (btn(🅾️) and pl.delay == 0)
     then
       pl.delay = cooldown
+      iframe = 32
       for dashy = pl.y,pl.y-pl.dash,-1 do
+       mob_dmg()
        if not map_collide(pl.x,dashy,pl.w,pl.h) then
          pl.y = dashy        
          spawntrail(pl.x+4,pl.y+2)
@@ -618,7 +688,9 @@ function move_player()
     if (btn(🅾️) and pl.delay == 0)
     then
       pl.delay = cooldown
+      iframe = 32
       for dashy = pl.y,pl.y+pl.dash do
+        mob_dmg()
         if not map_collide(pl.x,dashy,pl.w,pl.h) then
           pl.y = dashy 
           spawntrail(pl.x+4,pl.y-2)
@@ -627,7 +699,7 @@ function move_player()
     end    
   end  
 
-  pl.delay = max(0,pl.delay-1)
+  pl.delay = max(0, pl.delay-1)
   
   --inventory
   if(timer <= 0) then
@@ -971,14 +1043,14 @@ function invmenu()
  state="inv"
  txt,col={},{}
  _upd=update_inv
- eqt="[shield]"
- add(col,5)
+ eqt="wood shield"
+ add(col,6)
  add(txt,eqt)
- eqt="[armor]"
- add(col,5)
+ eqt="leather armor"
+ add(col,6)
  add(txt,eqt)
  add(txt,"……………………")
- add(col,6)
+ add(col,5)
  --add potion stuff
  add(txt,"health potion("..hpp..")")
  add(col,8)
@@ -1012,10 +1084,10 @@ function move_mnu(wnd)
  elseif btnp(4) and
         wnd.cur == 4 and
         hpp > 0 and
-        hp < hpmax then
+        pl.hp < hpmax then
   hpp -= 1
-  hp  += 1
-  addwind(5,5,28,13,{hp.."/"..hpmax.."♥"})
+  pl.hp  += 1
+  addwind(5,5,28,13,{pl.hp.."/"..hpmax.."♥"})
   txt[4] = "health potion("..hpp..")"
  elseif btnp(4) and
         wnd.cur == 5 and
