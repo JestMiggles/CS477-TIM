@@ -540,14 +540,14 @@ function addmob(typ,mobx,moby,variant)
   slani = {}
   skani = {}
   if variant == 1 then
-    slani = {17,18,19,20}
-    skani = {33,34,35,36}
+    slani = {17,18,19,20} //slime - green
+    skani = {33,34,35,36} //skele - skeleton
   elseif variant == 2 then
-    slani = {28,29,30,31}
-    skani = {33,34,35,36}
+    slani = {28,29,30,31} //smile - blue
+    skani = {33,34,35,36} //skele - skeleton
   else
-    slani = {44,45,46,47}
-    skani = {49,50,51,52}
+    slani = {44,45,46,47} //smile - red
+    skani = {49,50,51,52} //skele - ghost
   end
   local m = {
     x  = mobx,
