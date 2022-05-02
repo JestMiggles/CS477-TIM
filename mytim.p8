@@ -33,6 +33,7 @@ function _update()
     pl_dmg()
     portal_collision()
   elseif state == "inv" then
+  	 drawind()
   	 update_inv()
   elseif state == "travel" then
     update_travel()
@@ -82,7 +83,7 @@ function init_game()
   pl.h = 8
   pl.s = 1
   pl.tle = 0
-  pl.hp = 0
+  pl.hp = 3
   pl.delay = 0
   pl.dash = 6
   t = 0
@@ -516,6 +517,7 @@ function draw_pickups()
     spr(p.s,p.x*8,p.y*8)
   end
   camera(0,0)
+  drawind()
 end
 
 function aabb_collide(x1, y1, w1, h1, x2, y2, w2, h2)
@@ -746,7 +748,7 @@ function move_player()
   --inventory
   if(timer <= 0) then
     if(btn(❎)) then
-            invmenu()
+      invmenu()
       state = "inv"
     end
   else
@@ -1147,7 +1149,7 @@ end
 
 function invmenu()
  state="inv"
- local txt,col={},{}
+ txt,col={},{}
  _upd=update_inv
  eqt="wood shield"
  add(col,6)
@@ -1175,10 +1177,10 @@ function invmenu()
  
  invwind=addwind(5,29,84,62,txt)
  invwind.curmode=true
- invwind.cur=3
+ invwind.cur=5
  invwind.col=col
  
- statwind=addwind(5,17,84,13,{"atk: 1  def: 1"})
+ statwind=addwind(5,17,84,13,{"def: 1  stamina: 1"})
  
 end
 
