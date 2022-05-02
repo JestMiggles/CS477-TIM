@@ -12,6 +12,16 @@ function _init()
   level = 1  
 end
 
+function startup()
+  cls()
+  ts = 0  
+  Tstage = 0
+  state = "game"
+  init_game() 
+  init_pickups() 
+  level = 1 
+end
+
 function _update() 
   if state == "start" then
     update_start()
@@ -72,7 +82,7 @@ function init_game()
   pl.h = 8
   pl.s = 1
   pl.tle = 0
-  pl.hp = 3
+  pl.hp = 0
   pl.delay = 0
   pl.dash = 6
   t = 0
@@ -88,6 +98,7 @@ function init_game()
   spmin = 0
   iframe = 0
   timer = 0
+  txt,col={},{}
 
   itm_name={"broad sword","leather armor","red potion"}
   
@@ -174,7 +185,11 @@ end
 
 function game_over()
   cls()
-  print("you are dead",40,60,8)   
+  print("you are dead",40,60,8)
+  print("click z to restart", 28, 68, 8)
+  if(btn(4)) then
+    startup()
+  end  
 end
 
 function update_inv()
