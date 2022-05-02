@@ -475,10 +475,10 @@ end
 function init_pickups()
 
   pu = {}
-  add(pu, {s=23, x = 2, y=2})
-  add(pu, {s=24, x = 12, y=9})
-  add(pu, {s=39, x = 2, y=12})
-  add(pu, {s=40, x = 13, y=8})
+  add(pu, {s=25, x = 2, y=2, v=1})
+  add(pu, {s=26, x = 12, y=9, v=2})
+  add(pu, {s=40, x = 2, y=12, v=21})
+  add(pu, {s=41, x = 13, y=8, v=22})
 end
 
 function update_pickups()
