@@ -483,40 +483,42 @@ end
 -->8
 -- pickups
 function init_pickups()
-
   pu = {}
-  add(pu, {s=25, x = 2, y=2, v=1})
-  add(pu, {s=26, x = 12, y=9, v=2})
-  add(pu, {s=40, x = 2, y=12, v=21})
-  add(pu, {s=41, x = 13, y=8, v=22})
 end
 
 function update_pickups()
 
-   px = pl.x + cx
-   py = pl.y + cy
-   
-   for p in all(pu) do 
-     if aabb_collide(
-       px, py, pl.w, pl.h,
-       p.x*8,p.y*8,8 ,8) then
-       del(pu,p)
-     end
-   end
+  px = pl.x + cx
+  py = pl.y + cy
+
+  for p in all(pu) do
+    if aabb_collide(
+      px, py, pl.w, pl.h,
+      p.x*8,p.y*8,8 ,8) then
+      if(p.v == 1) then
+        hpp += 1
+      elseif(p.v == 2) then
+        hpp += 2
+      elseif(p.v == 21) then
+        spp += 1
+      else
+        spp += 2
+      end
+      del(pu,p)
+    end
+  end
 
 end
 
 function draw_pickups()
   camera(cx,cy)
   for p in all(pu) do 
-    spr(p.s,p.x8,p.y8)
+    spr(p.s,p.x*8,p.y*8)
   end
   camera(0,0)
 end
 
-function aabb_collide(
-              x1, y1, w1, h1,
-              x2, y2, w2, h2)
+function aabb_collide(x1, y1, w1, h1, x2, y2, w2, h2)
 
   if x1 < x2 + w2 and
      x1 + w1 > x2 and
@@ -845,6 +847,7 @@ function generate_map()
   allRooms = {}
   por={}
   mob = {}
+  pu = {}
   //create set of rooms
   rooms = {}
   //set values for each room
@@ -902,6 +905,8 @@ function generate_map()
     setMobs(cr)
 
     //spawn items
+    setItems(cr)
+    
 
     ::continue::
   end
@@ -997,7 +1002,7 @@ function setMobs(cr)
   //get top-left corner coords of room
   rcY = (16*rooms[cr].y) -15
   rcX = (16*rooms[cr].x) -15
-  for i=1,2*level do
+  for i=1,2+level do
     if flr(rnd(10)+1) > 3 then
       GM = {}
       GM.t = flr(rnd(2))
@@ -1015,14 +1020,31 @@ function setItems(cr)
   //get top-left corner coords of room
   rcY = (16*rooms[cr].y) -15
   rcX = (16*rooms[cr].x) -15
-  for i=1,2*level do
-    if flr(rnd(10)+1) > 3 then
-      PU = {}
-      PU.t = flr(rnd(2))
-      PU.x = flr(rnd(14)+rcX)
-      PU.y = flr(rnd(14)+rcY)
-      if mget(GM.x,GM.y) == 8 then
-        addmob(GM.t,GM.x,GM.y)
+  for i=1,3 do
+    if flr(rnd(10)+1) > 5 then
+      foo = {}
+      foo.x = flr(rnd(14)+rcX)
+      foo.y = flr(rnd(14)+rcY)
+      //determine if stamina or health
+      if flr(rnd(2)+1) == 1 then //stamina
+        if flr(rnd(2)+1) == 1 then //full
+          foo.s = 41
+          foo.v = 21
+        else
+          foo.s = 42
+          foo.v = 22
+        end
+      else // health
+        if flr(rnd(2)+1) == 1 then //half
+          foo.s=25
+          foo.v = 1
+        else
+          foo.s = 26
+          foo.v = 2
+        end
+      end
+      if mget(foo.x,foo.y) == 8 then
+        add(pu,foo)
       end
     end
   end
@@ -1051,7 +1073,6 @@ function pop(stack)
 end
 
 //Pico-8 fade sourced from https://www.lexaloffle.com/bbs/?tid=36250
-
 irisd=0
 irisi=92
 function iris()
@@ -1201,10 +1222,10 @@ __gfx__
 00000000007700000077000000770000007700000000000000000000007770000777777000000000000000000000000000000000000000000000000000000000
 00000000070707000707070007070700070707000000000000000000070007007000000706666600066666000000000000000000000000000000000000000000
 00000000077777000777770007777700077777000000000000000000070007007000000700606000006060000000000000000000000000000000000000000000
-0000000077000700070007007700070077000700000000000000000000777000077777700600060006aaa6000000000000000000000000000000000000000000
-0000000070777070707770707077707570777070000000000000000007aaa70077aaaa77607000606a7aaa600000000000000000000000000000000000000000
-000000000700075007000705070007000700075000000000000000007aaaaa707aaaaaa767aaaa6067aaaa600000000000000000000000000000000000000000
-000000000777770077777700077777000777770000000000000000007aaaaa7077aaaa776aaaaa606aaaaa600000000000000000000000000000000000000000
+0000000077000700070007007700070077000700000000000000000000777000077777700600060006bbb6000000000000000000000000000000000000000000
+0000000070777070707770707077707570777070000000000000000007aaa70077aaaa77607000606b7bbb600000000000000000000000000000000000000000
+000000000700075007000705070007000700075000000000000000007aaaaa707aaaaaa767bbbb6067bbbb600000000000000000000000000000000000000000
+000000000777770077777700077777000777770000000000000000007aaaaa7077aaaa776bbbbb606bbbbb600000000000000000000000000000000000000000
 00000000070007000700070007000700070007000000000000000000077777000777777006666600066666000000000000000000000000000000000000000000
 000000000077770000777700007777000077770000000000000000000001100cc0110000001110000c00000c0000000000000000000000000000000000000000
 000000000777777007777770077777700777777000000000000000000c13610c0c6311000c631c00c00011000000000000000000000000000000000000000000
